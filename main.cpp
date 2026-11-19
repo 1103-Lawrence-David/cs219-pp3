@@ -1,0 +1,30 @@
+#include "helpers.h"
+#define READ_FILE "pp2_input.txt"
+#define SIZE 200
+//Author:David Lawrence
+//I apologize for submitting this late. As per my message on canvas to dr.anima, Both of my laptops kicked the bucket.
+
+int main(){
+    uint32_t Ox100 = 0, Ox104 = 0, Ox108 = 0, Ox10c = 0, Ox110 = 0;
+    uint32_t *memArr[5] = {&Ox100, &Ox104, &Ox108, &Ox10c, &Ox110};
+    uint32_t R0 = 0,  R1 = 0, R2 = 0,  R3 = 0 , R4 = 0, R5 = 0, R6 = 0, R7 = 0, R8 = 0, R9 = 0, R10 = 0, R11 =0;
+    uint32_t *regArr[12] = {&R0, &R1, &R2, &R3, &R4, &R5, &R6, &R7, &R8, &R9, &R10, &R11};
+    int length = 0, operandCount[SIZE], flagZ;
+
+    ifstream fptr(READ_FILE);
+    if(!fptr.is_open()){
+        cout<< "File could not be opened properly." << endl;
+        return 1;
+    }
+
+    opCount(operandCount, fptr);
+    fptr.close();
+    ifstream fptr2(READ_FILE);
+    if(!fptr2.is_open()){
+        cout<< "File could not be opened properly." << endl;
+        return 1;
+    }
+    processInstruction(fptr2, length, memArr, regArr, operandCount, flagZ);
+    fptr2.close();
+    return 0;
+}
