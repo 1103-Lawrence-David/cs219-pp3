@@ -13,9 +13,9 @@ void conversion(uint32_t**, string, string, uint32_t&, uint32_t&);
 int findRegNum(string);
 
 //need to update ORR, EOR
-void bitwiseOp(uint32_t**, string, string, string, string, bool&);
+void bitwiseOp(uint32_t**, string, string, string, string, bool&, int&, int&, int&, int&);
 
-void dataTrans(uint32_t**, uint32_t**, string, string, string, bool&);
+void dataTrans(uint32_t**, uint32_t**, string, string, string, bool&, int&, int&, int&,int&);
 
 void branchOp(string, string, int);
 

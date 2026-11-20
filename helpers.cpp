@@ -47,21 +47,22 @@ void processInstruction(ifstream& fp, int& length, uint32_t** m, uint32_t** r, i
             }
             display(r, m, operation, operand1, operand2, operand3, flagZ, err, isBranch, flagN, flagC, flagV);
         }
-        else if(sort = 1){
+        else if(sort == 1){
             isBranch = false;
             if(err == true){
-                bitwiseOp(r, operation, operand1, operand2, operand3, err);
+                bitwiseOp(r, operation, operand1, operand2, operand3, err, flagN, flagZ, flagC, flagV);
             }
             display(r, m, operation, operand1, operand2, operand3, flagZ, err, isBranch, flagN, flagC, flagV);
         }
-        else if(sort = 2){
+        else if(sort == 2){
             isBranch = false;
+            cout << "is called" << endl; //debug
             if(err == true){
-                dataTrans(r, m, operation, operand1, operand2, err);
+                dataTrans(r, m, operation, operand1, operand2, err, flagN, flagC, flagZ, flagV);
             }
             display(r, m, operation, operand1, operand2, operand3, flagZ, err, isBranch, flagN, flagC, flagV);
         }
-        else if(sort = 3){
+        else if(sort == 3){
             isBranch = true;
             if(err == true){
                 branchOp(operation, operand1, flagZ);
@@ -368,11 +369,30 @@ void arithOp(uint32_t** rArr, string operation, string op1, string op2, string o
         regNum = findRegNum(op1);
         conversion(rArr, op1, op2, temp1, temp2);
         if(op1[0] == 'R'){
-            if((temp1 - temp2) == 0){
+            result = (temp1-temp2);
+            if(temp1 >= temp2){
+                c = 1;
+            }
+            else{
+                c = 0;
+            }
+            if(result == 0){
                 z = 1;
             }
             else{
                 z = 0;
+            }
+            if(result >= 2147483648 && result <= 4294967295){
+                n = 1;
+            }
+            else{ 
+                n = 0;
+            }
+            if((temp1 < 2147483648 && temp2 >= 2147483648 && result >= 2147483648)|| (temp1 >=2147483648 && temp2 <2147483648 && result < 2147483648)){
+                v = 1;
+            }
+            else{
+                v = 0;
             }
         }
         else{
@@ -383,10 +403,11 @@ void arithOp(uint32_t** rArr, string operation, string op1, string op2, string o
 }
 
 //This function takes AND, OR, and XOR, and performs those operations and stores in destination register.
-void bitwiseOp(uint32_t** r, string operation, string op1, string op2, string op3, bool& err){
+void bitwiseOp(uint32_t** r, string operation, string op1, string op2, string op3, bool& err, int& n, int& z, int& c, int& v){
     uint32_t temp1, temp2;
-    int regNum = 0;
-    if(operation == "AND"){
+    int regNum = 0, cond;
+    conditionalRoute(operation, n, z, c, v, cond);
+    if(operation[0] == 'A' && cond == 1){
         if(op2[0] == 'R'){
             regNum = findRegNum(op1);
             conversion(r, op2, op3, temp1, temp2);
@@ -397,7 +418,7 @@ void bitwiseOp(uint32_t** r, string operation, string op1, string op2, string op
             cout << "Error: Operand 2 can not be an immediate value." << endl;
         }
     }
-    if(operation == "EOR"){
+    if(operation[0] == 'E' && cond == 1){
         if(op2[0] == 'R'){
             regNum = findRegNum(op1);
             conversion(r, op2, op3, temp1, temp2);
@@ -408,7 +429,7 @@ void bitwiseOp(uint32_t** r, string operation, string op1, string op2, string op
             cout << "Error: Operand 2 can not be an immediate value." << endl;
         }
     }
-    if(operation == "ORR"){
+    if(operation[0] == 'O' && cond == 1){
         if(op2[0] == 'R'){
             regNum = findRegNum(op1);
             conversion(r, op2, op3, temp1, temp2);
@@ -422,47 +443,91 @@ void bitwiseOp(uint32_t** r, string operation, string op1, string op2, string op
 }
 
 //This function takes and executes LOAD and STORE functions.
-void dataTrans(uint32_t** r, uint32_t** m, string operation, string op1, string op2, bool& err){
-    int regNum;
+void dataTrans(uint32_t** r, uint32_t** m, string operation, string op1, string op2, bool& err, int& n, int& c, int& z, int& v){
+    int regNum, cond;
+    string tempop2;
     uint32_t temp1, temp2;
-    if(operation == "LDR"){
-        regNum = findRegNum(op2);
-        if(regNum >=0 && regNum <= 4){
-            temp1 = *m[regNum];
+    cout << "STORE/LOAD WORKS" << endl; //debug
+    conditionalRoute(operation, n, z, c, v, cond);
+    
+    if(operation[0] == 'L' && cond == 1){
+        if(op2[0] == '['){
+            tempop2 = op2.substr(1, op2.length() - 2);
+            regNum = findRegNum(tempop2);
+            temp1 = *r[regNum];
+            if(temp1 == 0x100){
+                tempop2 = "100";
+            }
+            if(temp1 == 0x104){
+                tempop2 = "104";
+            }
+            if(temp1 == 0x108){
+                tempop2 = "108";
+            }
+            if(temp1 == 0x10c){
+                tempop2 = "10c";
+            }
+            if(temp1 == 0x110){
+                tempop2 = "110";
+            }
+            regNum = findRegNum(tempop2);
+            temp2 = *m[regNum];
             regNum = findRegNum(op1);
-            if(regNum >=0 && regNum <= 7){
-                *r[regNum] = temp1;
+            if(regNum >=0 && regNum <= 11){
+                *r[regNum] = temp2;
+                cout << "finsihed properly" << endl;
             }
             else{
                 err = false;
                 cout << "Destination register of LOAD is invalid." << endl;
             }
+        
         }
+        // regNum = findRegNum(op2);
+        // if(regNum >=0 && regNum <= 4){
+        //     temp1 = *m[regNum];
+        //     regNum = findRegNum(op1);
+        //     if(regNum >=0 && regNum <= 11){
+        //         *r[regNum] = temp1;
+        //     }
+        //     else{
+        //         err = false;
+        //         cout << "Destination register of LOAD is invalid." << endl;
+        //     }
+        // }
         else{
             err = false;
             cout << "Memory address is out of range." << endl;
         }
     }
-    else if(operation == "STR"){
-        regNum = findRegNum(op1);
-        if(regNum >= 0 && regNum <=11){
+    else if(operation[0] == 'S' && cond == 1){
+        if(op2[0] == '['){
+            regNum = findRegNum(op1);
+            temp2 = *r[regNum];
+            tempop2 = op2.substr(1, op2.length() - 2);
+            regNum = findRegNum(tempop2);
             temp1 = *r[regNum];
-            regNum = findRegNum(op2);
-            if(regNum >= 0 && regNum <= 4){
-                *m[regNum] = temp1;
+            if(temp1 == 0x100){
+                regNum = 0;
             }
-            else{
-                err = false;
-                cout << "destination memory address is out of range" << endl;
+            if(temp1 == 0x104){
+                regNum = 1;
             }
+            if(temp1 == 0x108){
+                regNum = 2;
+            }
+            if(temp1 == 0x10c){
+                regNum = 3;
+            }
+            if(temp1 == 0x110){
+                regNum = 4;
+            }
+            *m[regNum] = temp2;
+            cout << "finished correctly" << endl; //debug
         }
         else{
-            err = false;
-            cout << "Source register does not exist!" << endl;
+            cout << "Data trans func failed catastrophically!" << endl;
         }
-    }
-    else{
-        cout << "Data trans func failed catastrophically!" << endl;
     }
 }
 

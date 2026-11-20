@@ -67,7 +67,7 @@ void opSort(string op, int& sort){
         sort = 0;
     }
     //operation == "AND" || operation == "OR" || operation == "EOR"
-    else if((op[0] == 'A' && op[2] == 'D') || (op[0] == 'O' && op[2] == 'O') || (op[0] == 'E' && op[2] == 'R')){
+    else if((op[0] == 'A' && op[2] == 'D') || (op[0] == 'O' && op[2] == 'R') || (op[0] == 'E' && op[2] == 'R')){
         sort = 1;
     }
     //operation == "LOAD" || operation == "STORE"
