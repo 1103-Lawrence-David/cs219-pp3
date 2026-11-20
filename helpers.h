@@ -22,3 +22,5 @@ void branchOp(string, string, int);
 bool errorCheck(string, string, string, string, int);
 
 void opCount(int*, ifstream&);
+
+void shiftOp(uint32_t**, string, string, string, string, bool&, int&, int&, int&,int&);

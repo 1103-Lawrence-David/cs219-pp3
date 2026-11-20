@@ -1,6 +1,5 @@
 #include "helpers.h"
 #define SIZE 200
-//I am so sorry about everything being in one file, i know its a pain to go through
 
 //This function process the raw data and calls the corresponding category of operation processing
 // It also calls the error checking to make sure its valid
@@ -37,8 +36,7 @@ void processInstruction(ifstream& fp, int& length, uint32_t** m, uint32_t** r, i
         }
 
         cleanUp(operand1, operand2, operand3);
-        //err = errorCheck(operation, operand1, operand2, operand3, opArr[length]);
-        err = true;
+        err = errorCheck(operation, operand1, operand2, operand3, opArr[length]);
         opSort(operation, sort);
         if(sort == 0){
             isBranch = false;
@@ -56,7 +54,6 @@ void processInstruction(ifstream& fp, int& length, uint32_t** m, uint32_t** r, i
         }
         else if(sort == 2){
             isBranch = false;
-            cout << "is called" << endl; //debug
             if(err == true){
                 dataTrans(r, m, operation, operand1, operand2, err, flagN, flagC, flagZ, flagV);
             }
@@ -69,6 +66,13 @@ void processInstruction(ifstream& fp, int& length, uint32_t** m, uint32_t** r, i
             }
             display(r, m, operation, operand1, operand2, operand3, flagZ, err, isBranch, flagN, flagC, flagV);
             
+        }
+        else if(sort == 4){
+            isBranch = false;
+            if(err == true){
+                shiftOp(r, operation, operand1, operand2, operand3,err, flagN, flagZ, flagC, flagV);
+            }
+            display(r, m, operation, operand1, operand2, operand3, flagZ, err, isBranch, flagN, flagC, flagV);
         }
         else{
             cout << "Invalid operation error" << endl;
@@ -97,9 +101,7 @@ void display(uint32_t** r, uint32_t** m, string operation, string operand1, stri
            cout << " ||||| " << operand3;
         }
         cout << endl;
-        if(operation == "CMP" || (operation.length() > 3 && operation[3] == 'S')){
-            cout << "N = " << flagN <<  " Z = " << flagZ << " C = " << flagC <<  " V = " << flagV << endl;
-        }
+        cout << "N = " << flagN <<  " Z = " << flagZ << " C = " << flagC <<  " V = " << flagV << endl;
     if(err == true && isBranch == false){
         cout << "Register array:" << endl;
         for(int i = 0; i < 12; i++){
@@ -275,7 +277,6 @@ void arithOp(uint32_t** rArr, string operation, string op1, string op2, string o
     conditionalRoute(operation, n, z, c, v, cond);
 
     if(operation[0] == 'A' && cond == 1){
-        cout << "ADD COND:" << cond << endl; //DEBUGGING
         regNum = findRegNum(op1);
         conversion(rArr, op2, op3, temp1, temp2);
         if(op2[0] == 'R'){
@@ -318,14 +319,18 @@ void arithOp(uint32_t** rArr, string operation, string op1, string op2, string o
     if(operation[0] == 'M' && cond == 1){
         regNum = findRegNum(op1);
         conversion(rArr, op2, op3, temp1, temp2);
-        if(regNum >= 0 && regNum <= 11){
+        if(regNum >= 0 && regNum <= 11 && operation[2] == 'V'){
             *rArr[regNum] = temp1;
+        }
+        else if(regNum >= 0 && regNum <= 11 && operation[2] == 'N'){
+            *rArr[regNum] = ~temp1;
         }
         else{
             cout << "cannot insert into a register that does not exist" << endl;
             err = false;
         }
     }
+
 
     if(operation[0] == 'S' && cond == 1){
         regNum = findRegNum(op1);
@@ -447,84 +452,104 @@ void dataTrans(uint32_t** r, uint32_t** m, string operation, string op1, string 
     int regNum, cond;
     string tempop2;
     uint32_t temp1, temp2;
-    cout << "STORE/LOAD WORKS" << endl; //debug
     conditionalRoute(operation, n, z, c, v, cond);
     
     if(operation[0] == 'L' && cond == 1){
         if(op2[0] == '['){
             tempop2 = op2.substr(1, op2.length() - 2);
             regNum = findRegNum(tempop2);
-            temp1 = *r[regNum];
-            if(temp1 == 0x100){
-                tempop2 = "100";
-            }
-            if(temp1 == 0x104){
-                tempop2 = "104";
-            }
-            if(temp1 == 0x108){
-                tempop2 = "108";
-            }
-            if(temp1 == 0x10c){
-                tempop2 = "10c";
-            }
-            if(temp1 == 0x110){
-                tempop2 = "110";
-            }
-            regNum = findRegNum(tempop2);
-            temp2 = *m[regNum];
-            regNum = findRegNum(op1);
-            if(regNum >=0 && regNum <= 11){
-                *r[regNum] = temp2;
-                cout << "finsihed properly" << endl;
+            if(regNum >=0 && regNum <=11){
+                temp1 = *r[regNum];
+                if(temp1 == 0x100){
+                    tempop2 = "0x100";
+                }
+                if(temp1 == 0x104){
+                    tempop2 = "0x104";
+                }
+                if(temp1 == 0x108){
+                    tempop2 = "0x108";
+                }
+                if(temp1 == 0x10c){
+                    tempop2 = "0x10c";
+                }
+                if(temp1 == 0x110){
+                    tempop2 = "0x110";
+                }
+                regNum = findRegNum(tempop2);
+                temp2 = *m[regNum];
+                regNum = findRegNum(op1);
+                if(regNum >=0 && regNum <= 11){
+                    *r[regNum] = temp2;
+                    cout << "finsihed properly" << endl;
+                }
+                else{
+                    err = false;
+                    cout << "Destination register of LOAD is invalid." << endl;
+                }
             }
             else{
                 err = false;
-                cout << "Destination register of LOAD is invalid." << endl;
+                cout << "formatting error" << endl;
             }
-        
         }
-        // regNum = findRegNum(op2);
-        // if(regNum >=0 && regNum <= 4){
-        //     temp1 = *m[regNum];
-        //     regNum = findRegNum(op1);
-        //     if(regNum >=0 && regNum <= 11){
-        //         *r[regNum] = temp1;
-        //     }
-        //     else{
-        //         err = false;
-        //         cout << "Destination register of LOAD is invalid." << endl;
-        //     }
-        // }
         else{
             err = false;
             cout << "Memory address is out of range." << endl;
         }
     }
+
     else if(operation[0] == 'S' && cond == 1){
         if(op2[0] == '['){
             regNum = findRegNum(op1);
-            temp2 = *r[regNum];
-            tempop2 = op2.substr(1, op2.length() - 2);
-            regNum = findRegNum(tempop2);
-            temp1 = *r[regNum];
-            if(temp1 == 0x100){
-                regNum = 0;
+            if(regNum >= 0 && regNum <=11){
+                temp2 = *r[regNum];
+                tempop2 = op2.substr(1, op2.length() - 2);
+                regNum = findRegNum(tempop2);
+                if(regNum >= 0 && regNum <= 11){
+                    temp1 = *r[regNum];
+                    
+                    if(temp1 == 0x100){
+                        regNum = 0;
+                    }
+                    
+                    if(temp1 == 0x104){
+                        regNum = 1;
+                    }
+                    
+                    if(temp1 == 0x108){
+                        regNum = 2;
+                    }
+                    
+                    if(temp1 == 0x10c){
+                        regNum = 3;
+                    }
+                    
+                    if(temp1 == 0x110){
+                        regNum = 4;
+                    }
+                    
+                    if(regNum >= 0 && regNum <=4){
+                        *m[regNum] = temp2;
+                    }
+                    
+                    else{
+                        cout << "Memory is out of range" << endl;
+                        err = false;
+                    }
+                }
+
+                else{
+                    err = false;
+                    cout << "register is out of range" << endl;
+                }
             }
-            if(temp1 == 0x104){
-                regNum = 1;
+            
+            else{
+                err = false;
+                cout << "register is out of range" << endl;
             }
-            if(temp1 == 0x108){
-                regNum = 2;
-            }
-            if(temp1 == 0x10c){
-                regNum = 3;
-            }
-            if(temp1 == 0x110){
-                regNum = 4;
-            }
-            *m[regNum] = temp2;
-            cout << "finished correctly" << endl; //debug
         }
+        
         else{
             cout << "Data trans func failed catastrophically!" << endl;
         }
@@ -554,20 +579,20 @@ void branchOp(string operation, string operand, int flagZ){
 }
 
 //This function takes the operation and opNum, and if it is the incorrect amount prints an error statement and returns corresponding bool.
-bool errorCheck(string operation, string o1, string o2, string o3, int opNum){
+bool errorCheck(string op, string o1, string o2, string o3, int opNum){
     if(opNum > 3 || opNum == 0){
         cout << "Error: incorrect operand ammount" << endl;
         return false;
     }
-    else if(opNum != 3 && (operation == "AND" || operation == "ADD" || operation == "SUB" || operation == "ORR" || operation == "EOR")){
+    else if(opNum != 3 && ((op[0] == 'A'  && op[2] == 'D') || (op[0] == 'S' && op[2] == 'B') || (op[0] == 'O' && op[2] == 'R') || (op[0] == 'E' && op[2] == 'R')||((op[0] == 'L') && (op[1] == 'S') &&(op[2] == 'L' || op[2] == 'R')))){
         cout << "error in operand amount" << endl;
         return false;
     }
-    else if(opNum != 2 && (operation == "MOV" || operation == "CMP" || operation == "LDR" || operation == "STR")){
+    else if(opNum != 2 && ((op[0] == 'M' && (op[2] == 'V' || op[2] =='N')) || (op[0] == 'C' && op[2] == 'P') || (op[0] == 'L' && op[1] == 'D' && op[2] == 'R') || (op[0] == 'S' && op[2] == 'R'))){
          cout << "error in operand amount" << endl;
         return false;
     }
-    else if(opNum != 1 && (operation == "BNE" || operation == "BAL" || operation == "BEQ")){
+    else if(opNum != 1 && (op == "BNE" || op == "BAL" || op == "BEQ")){
          cout << "error in operand amount" << endl;
         return false;
     }
@@ -593,5 +618,36 @@ void opCount(int* opArr, ifstream& fptr){
         }
         opArr[length] = count + 1;
         length++;
+    }
+}
+
+//This is a function that performs the appropriate shift operations
+void shiftOp(uint32_t** r, string operation, string op1, string op2, string op3, bool& err, int& n, int& z, int& c, int& v){
+    uint32_t temp1, temp2, temp3;
+    int regNum = 0, cond;
+    conditionalRoute(operation, n, z, c, v, cond);
+    if(operation[2] == 'L' && cond == 1){
+        if(op2[0] == 'R'){
+            regNum = findRegNum(op1);
+            conversion(r, op2, op3, temp1, temp2);
+            temp3 = temp1 << temp2;
+            *r[regNum] = temp3;
+        }
+        else{
+            err = false;
+            cout << "Error: Operand 2 can not be an immediate value." << endl;
+        }
+    }
+    if(operation[2] == 'R' && cond == 1){
+        if(op2[0] == 'R'){
+            regNum = findRegNum(op1);
+            conversion(r, op2, op3, temp1, temp2);
+            temp3 = temp1 >> temp2;
+            *r[regNum] = temp3;
+        }
+        else{
+            err = false;
+            cout << "Error: Operand 2 can not be an immediate value." << endl;
+        }
     }
 }

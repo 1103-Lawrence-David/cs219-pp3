@@ -63,7 +63,7 @@ void conditionalRoute(string operation, int& N, int& Z, int& C, int& V, int& con
 
 void opSort(string op, int& sort){
     //operation == "ADD" || operation == "SUB" || operation == "CMP" || operation == "MOV"
-    if((op[0] == 'A' && op[1] == 'D' && op[2] == 'D') || (op[0] == 'S' && op[2] == 'B') || (op[0] == 'C' && op[2] == 'P') || (op[0] == 'M' && op[2] == 'V')){
+    if((op[0] == 'A' && op[1] == 'D' && op[2] == 'D') || (op[0] == 'S' && op[2] == 'B') || (op[0] == 'C' && op[2] == 'P') || (op[0] == 'M' && (op[2] == 'V' || op[2] =='N'))){
         sort = 0;
     }
     //operation == "AND" || operation == "OR" || operation == "EOR"
@@ -71,12 +71,15 @@ void opSort(string op, int& sort){
         sort = 1;
     }
     //operation == "LOAD" || operation == "STORE"
-    else if((op[0] == 'L' && op[2] == 'R') || (op[0] == 'S' && op[2] == 'R')){
+    else if((op[0] == 'L' && op[1] == 'D' && op[2] == 'R') || (op[0] == 'S' && op[2] == 'R')){
         sort = 2;
     }
     //operation == "BAL" || operation == "BEQ" || operation == "BNE"
     else if ((op[0] == 'B') && (op[2] == 'L' || op[2] == 'Q' || op[2] == 'E')){
         sort = 3;
+    }
+    else if((op[0] == 'L') && (op[2] == 'L' || op[2] == 'R')){
+        sort = 4;
     }
     else{
         sort = 10;
