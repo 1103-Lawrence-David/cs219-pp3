@@ -6,8 +6,9 @@
 void processInstruction(ifstream& fp, int& length, uint32_t** m, uint32_t** r, int* opArr, int& flagZ){
     string fpString, operation, operand1 = "err", operand2 = "err", operand3 = "err";
     char tempChar;
-    int opCount, flagC = 0, flagN = 0, flagV =0, sort;
+    int opCount, flagC = 0, flagN = 0, flagV = 0, sort;
     bool err, isBranch = false;
+    flagZ = 0;
 
     while(getline(fp, fpString)){
         stringstream ss(fpString);
@@ -307,7 +308,6 @@ void arithOp(uint32_t** rArr, string operation, string op1, string op2, string o
                 else{
                     v = 0;
                 }
-                cout << "FLAGS: " << n << z << c << v << endl;
             }
         }
         else{
@@ -321,9 +321,39 @@ void arithOp(uint32_t** rArr, string operation, string op1, string op2, string o
         conversion(rArr, op2, op3, temp1, temp2);
         if(regNum >= 0 && regNum <= 11 && operation[2] == 'V'){
             *rArr[regNum] = temp1;
+            if(operation.length() > 3 && operation[3] == 'S'){
+                result = temp1;
+                if(result == 0){
+                    z = 1;
+                }
+                else{
+                    z = 0;
+                }
+                if(result >= 2147483648 && result <= 4294967295){
+                    n = 1;
+                }
+                else{ 
+                    n = 0;
+                }
+            }
         }
         else if(regNum >= 0 && regNum <= 11 && operation[2] == 'N'){
             *rArr[regNum] = ~temp1;
+            if(operation.length() > 3 && operation[3] == 'S'){
+                result = ~temp1;
+                if(result == 0){
+                    z = 1;
+                }
+                else{
+                    z = 0;
+                }
+                if(result >= 2147483648 && result <= 4294967295){
+                    n = 1;
+                }
+                else{ 
+                    n = 0;
+                }
+            }
         }
         else{
             cout << "cannot insert into a register that does not exist" << endl;
@@ -409,7 +439,7 @@ void arithOp(uint32_t** rArr, string operation, string op1, string op2, string o
 
 //This function takes AND, OR, and XOR, and performs those operations and stores in destination register.
 void bitwiseOp(uint32_t** r, string operation, string op1, string op2, string op3, bool& err, int& n, int& z, int& c, int& v){
-    uint32_t temp1, temp2;
+    uint32_t temp1, temp2, result;
     int regNum = 0, cond;
     conditionalRoute(operation, n, z, c, v, cond);
     if(operation[0] == 'A' && cond == 1){
@@ -417,6 +447,21 @@ void bitwiseOp(uint32_t** r, string operation, string op1, string op2, string op
             regNum = findRegNum(op1);
             conversion(r, op2, op3, temp1, temp2);
             *r[regNum] = (temp1 & temp2);
+            if(operation.length() > 3 && operation[3] == 'S'){
+                result = temp1 & temp2;
+                if(result == 0){
+                    z = 1;
+                }
+                else{
+                    z = 0;
+                }
+                if(result >= 2147483648 && result <= 4294967295){
+                    n = 1;
+                }
+                else{ 
+                    n = 0;
+                }
+            }
         }
         else{
             err = false;
@@ -428,6 +473,21 @@ void bitwiseOp(uint32_t** r, string operation, string op1, string op2, string op
             regNum = findRegNum(op1);
             conversion(r, op2, op3, temp1, temp2);
             *r[regNum] = (temp1 ^ temp2);
+            if(operation.length() > 3 && operation[3] == 'S'){
+                result = temp1 ^ temp2;
+                if(result == 0){
+                    z = 1;
+                }
+                else{
+                    z = 0;
+                }
+                if(result >= 2147483648 && result <= 4294967295){
+                    n = 1;
+                }
+                else{ 
+                    n = 0;
+                }
+            }
         }
         else{
             err = false;
@@ -439,6 +499,21 @@ void bitwiseOp(uint32_t** r, string operation, string op1, string op2, string op
             regNum = findRegNum(op1);
             conversion(r, op2, op3, temp1, temp2);
             *r[regNum] = (temp1 | temp2);
+            if(operation.length() > 3 && operation[3] == 'S'){
+                result = temp1 | temp2;
+                if(result == 0){
+                    z = 1;
+                }
+                else{
+                    z = 0;
+                }
+                if(result >= 2147483648 && result <= 4294967295){
+                    n = 1;
+                }
+                else{ 
+                    n = 0;
+                }
+            }
         }
         else{
             err = false;
@@ -480,7 +555,6 @@ void dataTrans(uint32_t** r, uint32_t** m, string operation, string op1, string 
                 regNum = findRegNum(op1);
                 if(regNum >=0 && regNum <= 11){
                     *r[regNum] = temp2;
-                    cout << "finsihed properly" << endl;
                 }
                 else{
                     err = false;
@@ -623,7 +697,7 @@ void opCount(int* opArr, ifstream& fptr){
 
 //This is a function that performs the appropriate shift operations
 void shiftOp(uint32_t** r, string operation, string op1, string op2, string op3, bool& err, int& n, int& z, int& c, int& v){
-    uint32_t temp1, temp2, temp3;
+    uint32_t temp1, temp2, temp3,result;
     int regNum = 0, cond;
     conditionalRoute(operation, n, z, c, v, cond);
     if(operation[2] == 'L' && cond == 1){
@@ -632,6 +706,27 @@ void shiftOp(uint32_t** r, string operation, string op1, string op2, string op3,
             conversion(r, op2, op3, temp1, temp2);
             temp3 = temp1 << temp2;
             *r[regNum] = temp3;
+            if(operation.length() > 3 && operation[3] == 'S'){
+                result = temp1 << temp2;
+                if(result == 0){
+                    z = 1;
+                }
+                else{
+                    z = 0;
+                }
+                if(result >= 2147483648 && result <= 4294967295){
+                    n = 1;
+                }
+                else{ 
+                    n = 0;
+                }
+                if(temp1 << (temp2-1) & 1){
+                    c = 1;
+                }
+                else{
+                    c=0;
+                }
+            }
         }
         else{
             err = false;
@@ -644,6 +739,27 @@ void shiftOp(uint32_t** r, string operation, string op1, string op2, string op3,
             conversion(r, op2, op3, temp1, temp2);
             temp3 = temp1 >> temp2;
             *r[regNum] = temp3;
+            if(operation.length() > 3 && operation[3] == 'S'){
+                result = temp1 >> temp2;
+                if(result == 0){
+                    z = 1;
+                }
+                else{
+                    z = 0;
+                }
+                if(result >= 2147483648 && result <= 4294967295){
+                    n = 1;
+                }
+                else{ 
+                    n = 0;
+                }
+                if(temp1 >> (temp2-1) & 1){
+                    c = 1;
+                }
+                else{
+                    c=0;
+                }
+            }
         }
         else{
             err = false;

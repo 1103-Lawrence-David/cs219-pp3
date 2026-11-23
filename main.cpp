@@ -1,8 +1,7 @@
 #include "helpers.h"
-#define READ_FILE "pp2_input.txt"
+#define READ_FILE "pp3_input.txt"
 #define SIZE 200
 //Author:David Lawrence
-//I apologize for submitting this late. As per my message on canvas to dr.anima, Both of my laptops kicked the bucket.
 
 int main(){
     uint32_t Ox100 = 0, Ox104 = 0, Ox108 = 0, Ox10c = 0, Ox110 = 0;
